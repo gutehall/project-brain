@@ -1,10 +1,10 @@
 {
   "mcpServers": {
     "project-brain": {
-      "command": "/Users/mathias/Development/Private/Various/project-brain/.venv/bin/python3",
-      "args": ["/Users/mathias/Development/Private/Various/project-brain/src/mcp_server.py"],
+      "command": "<REPLACE_WITH_PROJECT_BRAIN_PATH>/.venv/bin/python3",
+      "args": ["<REPLACE_WITH_PROJECT_BRAIN_PATH>/src/mcp_server.py"],
       "env": {
-        "PYTHONPATH": "/Users/mathias/Development/Private/Various/project-brain/src"
+        "PYTHONPATH": "<REPLACE_WITH_PROJECT_BRAIN_PATH>/src"
       }
     }
   }
