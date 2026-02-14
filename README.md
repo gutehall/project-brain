@@ -8,6 +8,7 @@
 - **Answers questions** about the project with full code context ("Where is error handling done in the API?")
 - **Semantic search** across the code ("Show everything related to the Stripe integration")
 - **Creates Linear issues** via AI based on a free-text description
+- **Creates Linear projects** with optional AI-generated description
 - **Auto-updates** via a git hook after every commit
 
 ---
@@ -94,6 +95,7 @@ brain search "stripe webhook"
 brain index
 brain summary
 brain linear "App crashes when logging out on iOS"
+brain linear-project "Q1 Migration" "Migrate legacy API to v2"
 ```
 
 ---
@@ -118,6 +120,7 @@ You can now ask in Cursor Chat:
 - *"Use project-brain to explain how the login flow works"*
 - *"Search the project for all API endpoints"*
 - *"Create a Linear issue: Fix memory leak in WebSocket handling"*
+- *"Create a Linear project: Q1 API Migration"*
 
 ---
 
@@ -125,11 +128,13 @@ You can now ask in Cursor Chat:
 
 The Linear integration works via:
 
-1. **Cursor Chat** — ask Cursor to call the `create_linear_issue` tool
-2. **Warp** — `brain linear "issue description"`
-3. **Directly via CLI** — `python3 scripts/brain.py linear "description"`
+1. **Cursor Chat** — ask Cursor to call `create_linear_issue` or `create_linear_project`
+2. **Warp** — `brain linear "issue description"` or `brain linear-project "Project name" [description]`
+3. **Directly via CLI** — `python3 scripts/brain.py linear "description"` or `python3 scripts/brain.py linear-project "name"`
 
-The AI automatically drafts the title, description and priority based on your text and the project context.
+**Issues:** The AI drafts the title, description and priority from your text and project context.
+
+**Projects:** Provide a name; optionally add a description or let the AI generate one from the project name and codebase summary.
 
 ---
 
@@ -139,13 +144,27 @@ To keep the index up to date after every commit:
 
 ```bash
 # Install the hook in your code project
-cp scripts/git_hook_post_commit.sh /path/to/your-project/.git/hooks/post-commit
+äxl
 chmod +x /path/to/your-project/.git/hooks/post-commit
 ```
 
 Edit the hook and set `PROJECT_BRAIN_DIR` to your project-brain install path if it differs from `$HOME/project-brain`.
 
 Indexing runs in the background and does not block your workflow.
+
+---
+
+## How the workflow works
+
+1. **Index** — Run `./scripts/index.sh` or `brain index` to scan your project. Files are chunked (overlapping line windows), embedded via Ollama’s `nomic-embed-text`, and stored in a vector DB on disk. Unchanged files are skipped; deleted files are pruned.
+
+2. **Ask / Search** — Your question or query is embedded and compared to stored chunks with cosine similarity. For **ask**, the top matches are sent to the LLM (`deepseek-coder-v2`) as context to generate an answer. For **search**, the top chunks are returned with file paths and line numbers.
+
+3. **Linear issues** — A free-text description is sent to the LLM to draft title, description, and priority, then created via the Linear GraphQL API.
+
+4. **Linear projects** — Provide a name; the LLM can optionally generate a description from the project name and codebase context.
+
+5. **Stay up to date** — Use the git post-commit hook to re-index in the background after each commit, or run `brain index` manually when needed.
 
 ---
 

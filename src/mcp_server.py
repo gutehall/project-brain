@@ -90,6 +90,29 @@ class MCPServer:
                     },
                     "required": ["description"]
                 }
+            },
+            {
+                "name": "create_linear_project",
+                "description": "Create a Linear project. Optionally uses AI to generate a description from the project name and codebase context.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Project name"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Project description (optional; AI-generated from name if omitted)"
+                        },
+                        "team_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Team IDs to associate (optional, uses default from config)"
+                        }
+                    },
+                    "required": ["name"]
+                }
             }
         ]
 
@@ -163,6 +186,15 @@ class MCPServer:
             return await create_issue(
                 description=args["description"],
                 team_id=args.get("team_id"),
+                rag=self.rag
+            )
+
+        elif tool_name == "create_linear_project":
+            from linear_integration import create_project
+            return await create_project(
+                name=args["name"],
+                description=args.get("description"),
+                team_ids=args.get("team_ids"),
                 rag=self.rag
             )
 

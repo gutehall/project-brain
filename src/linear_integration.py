@@ -129,3 +129,93 @@ Return JSON with these fields:
 
     except Exception as e:
         return f"❌ Could not create Linear issue: {e}"
+
+
+async def create_project(name: str, description: str = None, team_ids: list[str] = None, rag=None) -> str:
+    """
+    Create a Linear project. Optionally uses AI to expand a short name into a full description.
+    """
+    config = load_config()
+    api_key = config.get("linear_api_key", "")
+    default_team_ids = team_ids or ([config.get("linear_team_id")] if config.get("linear_team_id") else [])
+
+    if not api_key:
+        return (
+            "❌ Linear API key is missing.\n"
+            "Add 'linear_api_key' to config/config.json\n"
+            "Get your key at: https://linear.app/settings/api"
+        )
+
+    # If no description provided, use AI to generate one from the name
+    if not description and rag:
+        try:
+            ollama_url = config.get("ollama_url", "http://localhost:11434")
+            llm_model = config.get("llm_model", "deepseek-coder-v2")
+            summary_data = rag._load_json(rag._summary_file, {})
+            project_context = summary_data.get("summary", "")[:300]
+
+            prompt = f"""Based on this project name, write a 1-2 sentence description for a Linear project.
+Project context: {project_context}
+Name: {name}
+Respond with ONLY the description, no quotes or JSON."""
+
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(
+                    f"{ollama_url}/api/generate",
+                    json={"model": llm_model, "prompt": prompt, "stream": False}
+                )
+                description = resp.json().get("response", "").strip().strip('"')
+        except Exception:
+            description = ""
+
+    variables = {
+        "name": name[:255],
+        "description": description or None,
+        "teamIds": [t for t in default_team_ids if t] or None
+    }
+
+    mutation = """
+    mutation ProjectCreate($name: String!, $description: String, $teamIds: [String!]) {
+      projectCreate(input: {
+        name: $name
+        description: $description
+        teamIds: $teamIds
+      }) {
+        success
+        project {
+          id
+          name
+          description
+          url
+          state
+        }
+      }
+    }
+    """
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://api.linear.app/graphql",
+                json={"query": mutation, "variables": variables},
+                headers={
+                    "Authorization": api_key,
+                    "Content-Type": "application/json"
+                }
+            )
+            result = resp.json()
+
+            if "errors" in result:
+                return f"❌ Linear API error: {result['errors']}"
+
+            project = result["data"]["projectCreate"]["project"]
+            return (
+                f"✅ Linear project created!\n"
+                f"   Name: {project['name']}\n"
+                f"   State: {project['state']}\n"
+                f"   Link: {project['url']}\n"
+                + (f"\n📝 Description: {project.get('description', '')[:200]}" if project.get("description") else "")
+            )
+
+    except Exception as e:
+        return f"❌ Could not create Linear project: {e}"

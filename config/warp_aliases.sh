@@ -22,10 +22,11 @@ alias brain-search='brain search'
 alias brain-index='brain index'
 alias brain-summary='brain summary'
 alias brain-linear='brain linear'
+alias brain-linear-project='brain linear-project'
 
 # Autocomplete (zsh)
 _brain_complete() {
-    local commands=("ask" "search" "index" "summary" "linear")
+    local commands=("ask" "search" "index" "summary" "linear" "linear-project")
     compadd -a commands
 }
 compdef _brain_complete brain
@@ -38,4 +39,5 @@ compdef _brain_complete brain
 #   brain index --force            # force re-indexing
 #   brain summary                  # show project overview
 #   brain linear "Fix crash when user logs out"
+#   brain linear-project "Q1 Migration" "Migrate legacy API to v2"
 # ─────────────────────────────────────────────

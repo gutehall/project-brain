@@ -9,6 +9,8 @@ Usage:
   brain index
   brain index --force
   brain summary
+  brain linear <issue description>
+  brain linear-project <project name> [description]
 """
 
 import asyncio
@@ -74,9 +76,19 @@ async def main():
         result = await create_issue(description, rag=rag)
         print(result)
 
+    elif command in ("linear-project", "linearproject", "lp"):
+        if not args:
+            print("Usage: brain linear-project <project name> [description]")
+            sys.exit(1)
+        name = args[0]
+        description = " ".join(args[1:]) if len(args) > 1 else None
+        from linear_integration import create_project
+        result = await create_project(name, description=description, rag=rag)
+        print(result)
+
     else:
         print(f"Unknown command: {command}")
-        print("Available commands: ask, search, index, summary, linear")
+        print("Available commands: ask, search, index, summary, linear, linear-project")
         sys.exit(1)
 
 
