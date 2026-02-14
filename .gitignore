@@ -1,0 +1,23 @@
+# IDE / OS
+.vscode
+.cursor
+.kiro
+.DS_Store
+
+# Python
+.venv
+venv
+__pycache__
+*.py[cod]
+*.pyo
+*.egg-info
+.eggs
+
+# Config (contains secrets: linear_api_key, project_path)
+config/config.json
+
+# Local database (if configured in-repo)
+project-brain-db/
+
+# Logs
+*.log

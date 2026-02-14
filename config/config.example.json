@@ -1,0 +1,15 @@
+{
+  "_comment": "Copy to config.json and edit. config.json is gitignored.",
+  "project_path": "/path/to/your/project",
+  "database_path": "~/.project-brain/db",
+  "ollama_url": "http://localhost:11434",
+  "llm_model": "deepseek-coder-v2",
+  "embed_model": "nomic-embed-text",
+  "linear_api_key": "",
+  "linear_team_id": "",
+  "indexing": {
+    "chunk_size": 60,
+    "chunk_overlap": 10,
+    "auto_reindex_on_start": false
+  }
+}
