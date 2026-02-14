@@ -122,7 +122,7 @@ class RAGPipeline:
         root = Path(project_path).expanduser() if project_path else self.project_path
 
         if not root.exists():
-            return f"❌ Path does not exist: {root}"
+            return f"Error: Path does not exist: {root}"
 
         files = self._collect_files(root)
         current_files = {str(f.resolve()) for f in files}
@@ -165,7 +165,7 @@ class RAGPipeline:
 
             self._index[str(file)] = file_hash
             indexed += 1
-            print(f"  ✓ {file.relative_to(root)} ({len(chunks)} chunks)", file=__import__('sys').stderr)
+            print(f"  [OK] {file.relative_to(root)} ({len(chunks)} chunks)", file=__import__('sys').stderr)
 
         self._chunks = new_chunks
         self._save_json(self._index_file, self._index)
@@ -176,7 +176,7 @@ class RAGPipeline:
             await self._generate_summary(root)
 
         return (
-            f"✅ Indexing complete!\n"
+            f"Indexing complete!\n"
             f"   New/updated files: {indexed}\n"
             f"   Unchanged (skipped): {skipped}\n"
             f"   Total chunks in database: {len(new_chunks)}\n"
@@ -186,7 +186,7 @@ class RAGPipeline:
     async def search(self, query: str, n: int = 5) -> str:
         """Semantic search in the codebase."""
         if not self._chunks:
-            return "❌ No index found. Run index_project first."
+            return "Error: No index found. Run index_project first."
 
         query_embedding = await self._get_embedding(query)
 
@@ -203,9 +203,9 @@ class RAGPipeline:
         if not top:
             return "No relevant code snippets found."
 
-        result = f"🔍 Top {len(top)} results for: '{query}'\n\n"
+        result = f"Top {len(top)} results for: '{query}'\n\n"
         for score, chunk in top:
-            result += f"📄 {chunk['file']} (line {chunk['start_line']}-{chunk['end_line']}) [relevance: {score:.2f}]\n"
+            result += f"{chunk['file']} (line {chunk['start_line']}-{chunk['end_line']}) [relevance: {score:.2f}]\n"
             result += "```\n" + chunk["text"][:500] + "\n```\n\n"
 
         return result
@@ -213,7 +213,7 @@ class RAGPipeline:
     async def ask(self, question: str) -> str:
         """Answer a question about the project using RAG context."""
         if not self._chunks:
-            return "❌ No index found. Run index_project first."
+            return "Error: No index found. Run index_project first."
 
         # Retrieve relevant context
         query_embedding = await self._get_embedding(question)
@@ -310,4 +310,4 @@ Include:
             summary = f"Could not generate summary: {e}"
 
         self._save_json(self._summary_file, {"summary": summary})
-        print("  📋 Project summary generated", file=__import__('sys').stderr)
+        print("  Project summary generated", file=__import__('sys').stderr)

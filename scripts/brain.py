@@ -42,7 +42,7 @@ async def main():
             print("Usage: brain ask <question>")
             sys.exit(1)
         question = " ".join(args)
-        print(f"\n🧠 Asking about the project: {question}\n")
+        print(f"\nAsking about the project: {question}\n")
         print("─" * 50)
         result = await rag.ask(question)
         print(result)
@@ -57,13 +57,13 @@ async def main():
 
     elif command in ("index", "i"):
         force = "--force" in args or "-f" in args
-        print("📂 Indexing project...\n")
+        print("Indexing project...\n")
         result = await rag.index(force=force)
         print(result)
 
     elif command in ("summary", "sum"):
         result = await rag.get_summary()
-        print("\n📋 Project Overview\n")
+        print("\nProject Overview\n")
         print("─" * 50)
         print(result)
 

@@ -14,12 +14,12 @@ if [ ! -f "$PROJECT_BRAIN_DIR/scripts/brain.py" ]; then
 fi
 
 # Run indexing in the background (does not block the commit)
-echo "🧠 project-brain: updating index in the background..."
+echo "project-brain: updating index in the background..."
 (
     cd "$PROJECT_BRAIN_DIR"
     source .venv/bin/activate 2>/dev/null
     python3 scripts/brain.py index > /tmp/project-brain-index.log 2>&1
-    echo "✓ project-brain index updated"
+    echo "project-brain index updated"
 ) &
 
 exit 0

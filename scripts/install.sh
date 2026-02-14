@@ -10,7 +10,7 @@ YELLOW="\033[1;33m"
 RED="\033[0;31m"
 RESET="\033[0m"
 
-echo -e "${BOLD}🧠 project-brain — installing...${RESET}\n"
+echo -e "${BOLD}project-brain — installing...${RESET}\n"
 
 # --- Check Python ---
 if ! command -v python3 &> /dev/null; then
@@ -25,14 +25,14 @@ if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 
 fi
 
 PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-echo -e "${GREEN}✓ Python ${PYTHON_VERSION} found${RESET}"
+echo -e "${GREEN}[OK] Python ${PYTHON_VERSION} found${RESET}"
 
 # --- Check Ollama ---
 if ! command -v ollama &> /dev/null; then
-    echo -e "${YELLOW}⚠ Ollama not found. Installing...${RESET}"
+    echo -e "${YELLOW}Ollama not found. Installing...${RESET}"
     curl -fsSL https://ollama.com/install.sh | sh
 else
-    echo -e "${GREEN}✓ Ollama is installed${RESET}"
+    echo -e "${GREEN}[OK] Ollama is installed${RESET}"
 fi
 
 # --- Create virtual environment ---
@@ -45,18 +45,18 @@ echo -e "\n${BOLD}Installing Python dependencies...${RESET}"
 pip install --quiet --upgrade pip
 pip install --quiet -r requirements.txt
 
-echo -e "${GREEN}✓ Python dependencies installed${RESET}"
+echo -e "${GREEN}[OK] Python dependencies installed${RESET}"
 
 # --- Download Ollama models ---
 echo -e "\n${BOLD}Downloading AI models (this will take a few minutes)...${RESET}"
 
-echo "  → Downloading nomic-embed-text (embeddings model, ~300MB)..."
+echo "  -> Downloading nomic-embed-text (embeddings model, ~300MB)..."
 ollama pull nomic-embed-text
 
-echo "  → Downloading deepseek-coder-v2 (LLM, ~9GB — grab a coffee! ☕)..."
+echo "  -> Downloading deepseek-coder-v2 (LLM, ~9GB)..."
 ollama pull deepseek-coder-v2
 
-echo -e "${GREEN}✓ Models downloaded${RESET}"
+echo -e "${GREEN}[OK] Models downloaded${RESET}"
 
 # --- Bootstrap config if missing ---
 CONFIG_FILE="config/config.json"

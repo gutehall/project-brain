@@ -20,14 +20,14 @@ async def create_issue(description: str, team_id: str = None, rag=None) -> str:
 
     if not api_key:
         return (
-            "❌ Linear API key is missing.\n"
+            "Error: Linear API key is missing.\n"
             "Add 'linear_api_key' to config/config.json\n"
             "Get your key at: https://linear.app/settings/api"
         )
 
     if not default_team:
         return (
-            "❌ Linear Team ID is missing.\n"
+            "Error: Linear Team ID is missing.\n"
             "Add 'linear_team_id' to config/config.json\n"
             "Find your team ID via Linear's API or URL."
         )
@@ -74,7 +74,7 @@ Return JSON with these fields:
             issue_data = json.loads(raw[start:end])
 
     except Exception as e:
-        return f"❌ Could not generate issue data: {e}"
+        return f"Error: Could not generate issue data: {e}"
 
     # Create issue via Linear GraphQL API
     mutation = """
@@ -116,19 +116,19 @@ Return JSON with these fields:
             result = resp.json()
 
             if "errors" in result:
-                return f"❌ Linear API error: {result['errors']}"
+                return f"Error: Linear API error: {result['errors']}"
 
             issue = result["data"]["issueCreate"]["issue"]
             return (
-                f"✅ Linear issue created!\n"
+                f"Linear issue created!\n"
                 f"   ID: {issue['identifier']}\n"
                 f"   Title: {issue['title']}\n"
                 f"   Link: {issue['url']}\n\n"
-                f"📝 AI-generated description:\n{variables['description'][:300]}..."
+                f"AI-generated description:\n{variables['description'][:300]}..."
             )
 
     except Exception as e:
-        return f"❌ Could not create Linear issue: {e}"
+        return f"Error: Could not create Linear issue: {e}"
 
 
 async def create_project(name: str, description: str = None, team_ids: list[str] = None, rag=None) -> str:
@@ -141,7 +141,7 @@ async def create_project(name: str, description: str = None, team_ids: list[str]
 
     if not api_key:
         return (
-            "❌ Linear API key is missing.\n"
+            "Error: Linear API key is missing.\n"
             "Add 'linear_api_key' to config/config.json\n"
             "Get your key at: https://linear.app/settings/api"
         )
@@ -206,16 +206,16 @@ Respond with ONLY the description, no quotes or JSON."""
             result = resp.json()
 
             if "errors" in result:
-                return f"❌ Linear API error: {result['errors']}"
+                return f"Error: Linear API error: {result['errors']}"
 
             project = result["data"]["projectCreate"]["project"]
             return (
-                f"✅ Linear project created!\n"
+                f"Linear project created!\n"
                 f"   Name: {project['name']}\n"
                 f"   State: {project['state']}\n"
                 f"   Link: {project['url']}\n"
-                + (f"\n📝 Description: {project.get('description', '')[:200]}" if project.get("description") else "")
+                + (f"\nDescription: {project.get('description', '')[:200]}" if project.get("description") else "")
             )
 
     except Exception as e:
-        return f"❌ Could not create Linear project: {e}"
+        return f"Error: Could not create Linear project: {e}"
