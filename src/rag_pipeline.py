@@ -5,19 +5,24 @@ Indexes the codebase, saves the vector database persistently and answers questio
 
 import json
 import hashlib
+import logging
 from pathlib import Path
 from typing import Optional
 import httpx
 
 from config import load_config
 
+logger = logging.getLogger("project-brain")
+
 # File types to index
-CODE_EXTENSIONS = {
+DEFAULT_CODE_EXTENSIONS = {
     ".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".rs", ".java",
     ".cpp", ".c", ".h", ".cs", ".rb", ".php", ".swift", ".kt",
     ".vue", ".svelte", ".html", ".css", ".scss", ".sql",
     ".md", ".mdx", ".yaml", ".yml", ".json", ".toml", ".env.example"
 }
+
+DEFAULT_IGNORE_EXTENSIONS = {".min.js", ".min.css", ".bundle.js", ".map"}
 
 DEFAULT_IGNORE_DIRS = {
     "node_modules", ".git", "__pycache__", ".venv", "venv",
@@ -37,9 +42,12 @@ class RAGPipeline:
         indexing = self.config.get("indexing", {})
         self._chunk_size = indexing.get("chunk_size", 60)
         self._chunk_overlap = indexing.get("chunk_overlap", 10)
-        # Use config ignore_dirs if set, otherwise defaults
         config_ignore = self.config.get("ignore_dirs")
         self._ignore_dirs = set(config_ignore) if config_ignore else DEFAULT_IGNORE_DIRS
+        config_ignore_ext = self.config.get("ignore_extensions")
+        self._ignore_extensions = set(config_ignore_ext) if config_ignore_ext else DEFAULT_IGNORE_EXTENSIONS
+        config_ext = self.config.get("include_extensions")
+        self._code_extensions = set(config_ext) if config_ext else DEFAULT_CODE_EXTENSIONS
 
         self.db_path.mkdir(parents=True, exist_ok=True)
         self._index_file = self.db_path / "index.json"
@@ -68,7 +76,11 @@ class RAGPipeline:
         for p in root.rglob("*"):
             if any(part in self._ignore_dirs for part in p.parts):
                 continue
-            if p.is_file() and p.suffix in CODE_EXTENSIONS:
+            if not p.is_file():
+                continue
+            if p.suffix in self._ignore_extensions:
+                continue
+            if p.suffix in self._code_extensions:
                 files.append(p)
         return files
 
@@ -117,8 +129,22 @@ class RAGPipeline:
             return 0.0
         return dot / (norm_a * norm_b)
 
+    async def _check_ollama(self) -> Optional[str]:
+        """Verify Ollama is reachable. Returns error message or None if OK."""
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                resp = await client.get(f"{self.ollama_url}/api/tags")
+                resp.raise_for_status()
+        except Exception as e:
+            return f"Error: Cannot reach Ollama at {self.ollama_url}. Is it running? {e}"
+        return None
+
     async def index(self, project_path: Optional[str] = None, force: bool = False) -> str:
         """Index the project codebase. Skips files that have not changed."""
+        err = await self._check_ollama()
+        if err:
+            return err
+
         root = Path(project_path).expanduser() if project_path else self.project_path
 
         if not root.exists():
@@ -139,10 +165,11 @@ class RAGPipeline:
         new_chunks = []
         indexed = 0
         skipped = 0
+        total = len(files)
 
-        print(f"Found {len(files)} files to index...", file=__import__('sys').stderr)
+        logger.info("Found %d files to index...", total)
 
-        for file in files:
+        for i, file in enumerate(files):
             file_hash = self._file_hash(file)
 
             # Skip if file has not changed
@@ -161,11 +188,12 @@ class RAGPipeline:
                     chunk["embedding"] = embedding
                     new_chunks.append(chunk)
                 except Exception as e:
-                    print(f"Warning: could not embed {file}: {e}", file=__import__('sys').stderr)
+                    logger.warning("Could not embed %s: %s", file, e)
 
             self._index[str(file)] = file_hash
             indexed += 1
-            print(f"  [OK] {file.relative_to(root)} ({len(chunks)} chunks)", file=__import__('sys').stderr)
+            if (i + 1) % 10 == 0 or i == total - 1:
+                logger.info("Indexed %d/%d files...", i + 1, total)
 
         self._chunks = new_chunks
         self._save_json(self._index_file, self._index)
@@ -185,6 +213,9 @@ class RAGPipeline:
 
     async def search(self, query: str, n: int = 5) -> str:
         """Semantic search in the codebase."""
+        err = await self._check_ollama()
+        if err:
+            return err
         if not self._chunks:
             return "Error: No index found. Run index_project first."
 
@@ -212,6 +243,9 @@ class RAGPipeline:
 
     async def ask(self, question: str) -> str:
         """Answer a question about the project using RAG context."""
+        err = await self._check_ollama()
+        if err:
+            return err
         if not self._chunks:
             return "Error: No index found. Run index_project first."
 
@@ -310,4 +344,4 @@ Include:
             summary = f"Could not generate summary: {e}"
 
         self._save_json(self._summary_file, {"summary": summary})
-        print("  Project summary generated", file=__import__('sys').stderr)
+        logger.info("Project summary generated")

@@ -21,3 +21,8 @@ project-brain-db/
 
 # Logs
 *.log
+
+# Test
+.pytest_cache
+.coverage
+htmlcov/

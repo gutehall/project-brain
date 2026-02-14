@@ -165,6 +165,10 @@ class MCPServer:
         if self.rag is None:
             from rag_pipeline import RAGPipeline
             self.rag = RAGPipeline()
+            # Auto-reindex on start if configured
+            indexing = self.rag.config.get("indexing", {})
+            if indexing.get("auto_reindex_on_start"):
+                await self.rag.index(force=False)
 
         if tool_name == "ask_project":
             return await self.rag.ask(args["question"])

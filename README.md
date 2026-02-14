@@ -55,12 +55,21 @@ Edit `config/config.json` (created from `config.example.json` on first install):
   "llm_model": "deepseek-coder-v2",
   "embed_model": "nomic-embed-text",
   "linear_api_key": "lin_api_xxxxx",
-  "linear_team_id": "TEAM-ID"
+  "linear_team_id": "TEAM-ID",
+  "ignore_dirs": ["node_modules", ".git", "dist", "build"],
+  "ignore_extensions": [".min.js", ".min.css", ".map"],
+  "indexing": {
+    "chunk_size": 60,
+    "chunk_overlap": 10,
+    "auto_reindex_on_start": false
+  }
 }
 ```
 
 > **Linear API key:** https://linear.app/settings/api  
 > **Linear Team ID:** found in the URL when you are on your team page
+
+**Env overrides:** `PROJECT_BRAIN_PROJECT_PATH`, `PROJECT_BRAIN_DATABASE_PATH`, `LINEAR_API_KEY`, `LINEAR_TEAM_ID`
 
 ---
 
@@ -90,6 +99,9 @@ source ~/project-brain/config/warp_aliases.sh
 Restart Warp and use directly:
 
 ```bash
+brain --help                    # Show usage
+brain -q index                  # Quiet mode (suppress progress)
+brain -v index                 # Verbose mode
 brain ask "How does authentication work?"
 brain search "stripe webhook"
 brain index
@@ -144,7 +156,7 @@ To keep the index up to date after every commit:
 
 ```bash
 # Install the hook in your code project
-äxl
+cp scripts/git_hook_post_commit.sh /path/to/your-project/.git/hooks/post-commit
 chmod +x /path/to/your-project/.git/hooks/post-commit
 ```
 
@@ -229,5 +241,7 @@ ollama pull qwen2.5-coder:7b
 ## Development
 
 - Python dependencies: `pip install -r requirements.txt`
+- Run tests: `pip install -r requirements-dev.txt && pytest tests -v`
 - Source layout: `src/` (RAG pipeline, MCP server, Linear integration), `scripts/` (CLI, install, index)
+- Config overrides via env: `PROJECT_BRAIN_PROJECT_PATH`, `LINEAR_API_KEY`, etc.
 
