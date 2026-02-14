@@ -11,5 +11,28 @@
     "chunk_size": 60,
     "chunk_overlap": 10,
     "auto_reindex_on_start": false
-  }
+  },
+  "ignore_dirs": [
+    "cdk.out",
+    ".cursor",
+    ".git",
+    ".pytest_cache",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".next",
+    ".nuxt",
+    "coverage",
+    "node_modules",
+    ".vscode",
+    ".kiro",
+    "lib",
+    ".aws-sam",
+    ".terraform",
+    ".nyc_output",
+    "jspm_packages",
+    "__pycache__",
+    ".idea"
+  ]
 }
